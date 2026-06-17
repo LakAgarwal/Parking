@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPark AI - Smart Parking Analytics Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-square-p logo-icon"></i>
+                <h2>AutoPark <span>AI</span></h2>
+            </div>
+            
+            <nav class="side-nav">
+                <a href="#" class="nav-item active"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                <a href="#slots-section" class="nav-item"><i class="fa-solid fa-draw-polygon"></i> Configure Slots</a>
+                <a href="#model-section" class="nav-item"><i class="fa-solid fa-brain"></i> Transfer Learning</a>
+            </nav>
+            
+            <div class="system-status-card">
+                <div class="status-indicator-wrapper">
+                    <span class="status-dot pulsing"></span>
+                    <span class="status-text">Backend Connected</span>
+                </div>
+                <div class="system-details">
+                    <p><i class="fa-solid fa-microchip"></i> Device: <span id="hardware-device">CPU (ResNet18)</span></p>
+                    <p><i class="fa-solid fa-wifi"></i> Signal: <span class="green-text">99.8%</span></p>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Panel -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1>Real-Time Smart Parking Monitor</h1>
+                    <p>Computer Vision powered slot occupancy classification using Transfer Learning</p>
+                </div>
+                <div class="time-widget">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="live-time">00:00:00 AM</span>
+                </div>
+            </header>
+            
+            <!-- Statistics Row -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper blue-glow">
+                        <i class="fa-solid fa-car"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Slots</h3>
+                        <p id="stat-total" class="stat-value">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper green-glow">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Available</h3>
+                        <p id="stat-available" class="stat-value available-text">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper red-glow">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Occupied</h3>
+                        <p id="stat-occupied" class="stat-value occupied-text">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper purple-glow">
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Occupancy Rate</h3>
+                        <p id="stat-rate" class="stat-value">0%</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dashboard Main Workspace -->
+            <section class="workspace-grid">
+                <!-- Live Video Feed and Settings -->
+                <div class="workspace-left">
+                    <div class="card feed-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-video"></i> Live CCTV Camera Stream</h2>
+                            <div class="feed-controls">
+                                <span class="mode-badge" id="current-mode">Monitoring Mode</span>
+                            </div>
+                        </div>
+                        
+                        <div class="video-container-wrapper">
+                            <!-- Overlay canvas for drawing slot boxes -->
+                            <canvas id="slot-canvas"></canvas>
+                            <!-- The live MJPEG stream -->
+                            <img src="/video_feed" id="live-stream-img" alt="CCTV Parking Stream">
+                        </div>
+                        
+                        <!-- Drawing Controls -->
+                        <div class="feed-toolbar">
+                            <button id="btn-detect-slots" class="btn btn-primary">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Detect Slots
+                            </button>
+                            <button id="btn-draw-mode" class="btn btn-secondary">
+                                <i class="fa-solid fa-crop"></i> Draw Custom Slot
+                            </button>
+                            <button id="btn-clear-slots" class="btn btn-danger">
+                                <i class="fa-solid fa-trash-can"></i> Clear All Slots
+                            </button>
+                            <button id="btn-reset-slots" class="btn btn-warning">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Restore Defaults
+                            </button>
+                        </div>
+                        
+                        <!-- Video Sources -->
+                        <div class="video-sources">
+                            <h3><i class="fa-solid fa-sliders"></i> Video & Stream Controls</h3>
+                            <div class="source-buttons">
+                                <button id="btn-use-sim" class="btn btn-primary-outline active">
+                                    <i class="fa-solid fa-film"></i> Default Simulation Video
+                                </button>
+                                <div class="upload-btn-wrapper">
+                                    <button class="btn btn-primary-outline"><i class="fa-solid fa-upload"></i> Upload Custom Video</button>
+                                    <input type="file" id="video-upload-input" accept="video/mp4" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar status, Logs, Model Info -->
+                <div class="workspace-right">
+                    <!-- Slot Status List -->
+                    <div class="card list-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-list-check"></i> Parking Slot Status</h2>
+                        </div>
+                        <div class="slot-list-container" id="slot-status-list">
+                            <!-- Populated dynamically via JS -->
+                            <div class="empty-state">Loading slots...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Activity Logs -->
+                    <div class="card log-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-receipt"></i> Real-Time Events Feed</h2>
+                            <span class="pulse-icon green-pulse"></span>
+                        </div>
+                        <div class="logs-container" id="logs-container">
+                            <p class="log-placeholder">System starting up... Listening for events...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Transfer Learning Control Section -->
+            <section id="model-section" class="card model-card">
+                <div class="model-flex">
+                    <div class="model-info-pane">
+                        <h2><i class="fa-solid fa-brain"></i> Transfer Learning Model (ResNet18)</h2>
+                        <p>This system uses a <strong>ResNet18 Deep Neural Network</strong> pre-trained on ImageNet. For custom environments, we freeze the visual feature extraction layers and fine-tune a custom linear classification head on parking lot images using the video frames.</p>
+                        
+                        <div class="model-stats-row">
+                            <div class="m-stat">
+                                <span class="label">Training Samples</span>
+                                <span class="val" id="model-samples">810 Images</span>
+                            </div>
+                            <div class="m-stat">
+                                <span class="label">Accuracy Achieved</span>
+                                <span class="val green-text" id="model-accuracy">87.9%</span>
+                            </div>
+                            <div class="m-stat">
+                                <span class="label">Classification Class</span>
+                                <span class="val">Binary (Empty/Occupied)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="model-action-btn-row">
+                            <button id="btn-train-model" class="btn btn-primary">
+                                <i class="fa-solid fa-gear"></i> Retrain Model on Live Footage
+                            </button>
+                            <span id="training-spinner" class="spinner hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Training...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-logs-pane">
+                        <h3>Training Execution Logs</h3>
+                        <div class="model-logs-box" id="model-logs">
+                            [System Ready] Click "Retrain Model" to execute the PyTorch Transfer Learning pipeline.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Dialog / Modal for slot naming -->
+    <div id="naming-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-tag"></i> Name New Parking Slot</h3>
+            <p>Give this new slot a descriptive label (e.g. A4, VIP-1, Lot-B2).</p>
+            <input type="text" id="slot-name-input" placeholder="Enter slot ID (e.g. A4)" maxlength="8">
+            <div class="modal-buttons">
+                <button id="btn-modal-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="btn-modal-confirm" class="btn btn-primary">Save Slot</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Javascript File -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=4"></script>
+</body>
+</html>

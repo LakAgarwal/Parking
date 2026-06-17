@@ -1,0 +1,7 @@
+
+> start
+> node src/index.js
+
+Server running on port 5000
+[37m[41mMil gya error Error: querySrv ENOTFOUND _mongodb._tcp.parkingsystem.9ssy4nx.mongodb.net[49m[39m
+^C^C
